@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>圆形碰撞反弹</title>
+    <style>
+        html, body {margin: 0;height: 100%;}
+        #rec {width: 100%;height: 100%;}
+    </style>
+</head>
+<body>
+<div id="rec">
+    <canvas id="canvas"></canvas>
+</div>
+<script src="js/lv.js"></script>
+<script>
+    const rec=document.getElementById('rec');
+    const canvas=document.getElementById('canvas');
+    const {clientWidth,clientHeight}=rec;
+    let recW=rec.clientWidth;
+    let recH=rec.clientHeight;
+    canvas.width=recW;
+    canvas.height=recH;
+    const ctx=canvas.getContext('2d');
+
+    let vx=8; //初始速度
+    let vy=6; //初始速度
+    const bounce=-1; //反弹
+
+    //简单圆形
+    class Ball{
+        constructor(edgeNum=3,radius=0,color='#000'){
+            this.edgeNum=edgeNum;
+            this.radius=radius;
+            this.color=color;
+            this.pos=new Vector2();
+            this.boundingBox=null;
+        }
+        computeBoundingBox(){
+            const {pos:{x,y},radius}=this;
+            this.boundingBox={
+                min:new Vector2(x-radius,y-radius),
+                max:new Vector2(x+radius,y+radius)
+            };
+            return this.boundingBox;
+        }
+        draw(ctx){
+            //ctx.save();
+            const {pos:{x,y},radius,color,edgeNum}=this;
+            ctx.beginPath();
+            const angle=Math.PI*2/edgeNum;
+            ctx.beginPath();
+            for(let i=0;i<edgeNum;i++){
+                const px=Math.cos(angle*i)*radius+x;
+                const py=Math.sin(angle*i)*radius+y;
+                if(i===0){
+                    ctx.moveTo(px,py);
+                }else{
+                    ctx.lineTo(px,py);
+                }
+
+            }
+            ctx.closePath();
+
+            ctx.fillStyle=color;
+            ctx.lineWidth=4;
+            ctx.fill();
+            //ctx.restore();
+        }
+    }
+
+    const ball = new Ball(3,70,'burlywood');
+    ball.pos.set(recW/2,recH/2);
+    let dir=-1;
+
+    (function drawFrame(){
+        window.requestAnimationFrame(drawFrame,canvas);
+        render();
+    })();
+    function render() {
+        clear(ctx);
+        ball.pos.x+=vx;
+        if(checkCrash()){
+            if(ball.edgeNum>=8||ball.edgeNum<4){
+                dir*=-1;
+            }
+            ball.edgeNum+=dir;
+
+
+        }
+        ball.draw(ctx);
+    }
+    function checkCrash(){
+        const {min,max}=ball.computeBoundingBox();
+        const {radius}=ball;
+        if(max.x > recW){
+            ball.pos.x = recW - radius;
+            vx *= bounce;
+            return true;
+        }else if(min.x < 0){
+            ball.pos.x = radius;
+            vx *= bounce;
+            return true;
+        }
+
+        return false;
+    }
+    function clear(ctx){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+
+</script>
+</body>
+</html>
+
